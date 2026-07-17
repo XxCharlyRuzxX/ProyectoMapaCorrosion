@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  # 1. BASE DE DATOS GEOESPACIAL
+  db:
+    image: postgis/postgis:15-3.3
+    container_name: mapa_db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: corrosion_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. BACKEND (API REST)
+  backend:
+    build:
+      context: ./backend
+    container_name: mapa_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:password123@db:5432/corrosion_db
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+
+  # 3. FRONTEND (MAPA INTERACTIVO)
+  frontend:
+    build:
+      context: ./frontend
+    container_name: mapa_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+# Declaración del volumen para la persistencia de datos
+volumes:
+  postgres_data:
