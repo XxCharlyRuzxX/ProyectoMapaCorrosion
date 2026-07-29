@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Hanken_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const hankenGrotesk = Hanken_Grotesk({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-hanken",
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -25,9 +21,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${hankenGrotesk.variable} ${hankenGrotesk.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <header className="flex items-center justify-between px-8 py-5 border-b border-white/10 w-full bg-[#161616]">
+        <div className="flex items-center gap-8">
+          <h1 className="text-2xl font-bold text-white">Mapa de Corrosion</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="w-6 h-6 bg-white/10 rounded-full"></div> {/* Icono */}
+        </div>
+      </header>
+        {children}
+        </body>
     </html>
   );
 }
