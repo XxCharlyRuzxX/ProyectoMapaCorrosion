@@ -59,7 +59,7 @@ export default function PageMap() {
 
       {!leftPanelOpen && (
         <Info
-          className="absolute top-24 left-4 w-6 h-6 text-white cursor-pointer"
+          className="absolute top-24 left-4 w-6 h-6 text-black  cursor-pointer"
           onClick={() => setLeftPanelOpen(true)}
         />
       )}

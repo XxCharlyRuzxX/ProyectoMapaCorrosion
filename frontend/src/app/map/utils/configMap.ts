@@ -1,5 +1,7 @@
-import { Map } from "maplibre-gl";
-import { corrosionPointsToGeoJSON } from "./toGeoJson";
+import { Map, Marker } from "maplibre-gl";
+import { createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { MapPin } from "lucide-react";
 import { mockCorrosionPoints } from "@/app/data/mockCorrosionPoints";
 import { CorrosionPoint } from "@/app/core/CorrosionPoint";
 
@@ -7,7 +9,7 @@ export function configInitialMap(
   mapContainer: React.RefObject<HTMLDivElement | null>,
 ): Map {
   const mapStyleBase =
-    "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json";
+    "https://basemaps.cartocdn.com/gl/voyager-nolabels-gl-style/style.json";
 
   return new Map({
     container: mapContainer.current as HTMLElement,
@@ -23,44 +25,48 @@ export function configInitialMap(
   });
 }
 
+
+function createMarkerElement(color: string): HTMLDivElement {
+  const el = document.createElement("div");
+  el.style.cursor = "pointer";
+  el.style.filter = "drop-shadow(0 2px 3px rgba(0,0,0,0.4))";
+
+  const root = createRoot(el);
+  root.render(
+    createElement(MapPin, {
+      size: 36,
+      color: "#ffffff",
+      fill: color,
+      strokeWidth: 1.5,
+    }),
+  );
+
+  return el;
+}
+
 export function configCorrosionPoints(
   map: Map,
   onPointSelect: (point: CorrosionPoint) => void,
-) {
-  map.addSource("corrosion-points", {
-    type: "geojson",
-    data: corrosionPointsToGeoJSON(mockCorrosionPoints),
+): Marker[] {
+  const markers: Marker[] = [];
+
+  mockCorrosionPoints.forEach((point) => {
+    const color = "#6b7280";
+    const el = createMarkerElement(color);
+
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      onPointSelect(point);
+    });
+
+    const marker = new Marker({ element: el, anchor: "bottom" })
+      .setLngLat([point.position.lng, point.position.lat])
+      .addTo(map);
+
+    markers.push(marker);
   });
 
-  map.addLayer({
-    id: "corrosion-points-layer",
-    type: "circle",
-    source: "corrosion-points",
-    paint: {
-      "circle-radius": 8,
-      "circle-color": "#999999",
-      "circle-stroke-width": 2,
-      "circle-stroke-color": "#ffffff",
-    },
-  });
-
-  map.on("mouseenter", "corrosion-points-layer", () => {
-    map.getCanvas().style.cursor = "pointer";
-  });
-  map.on("mouseleave", "corrosion-points-layer", () => {
-    map.getCanvas().style.cursor = "";
-  });
-
-  map.on("click", "corrosion-points-layer", (e) => {
-    const feature = e.features?.[0];
-    if (feature?.geometry?.type !== "Point") return;
-
-    const props = feature.properties;
-    const original = mockCorrosionPoints.find((p) => p.id === props.id);
-    if (original && onPointSelect) {
-      onPointSelect(original);
-    }
-  });
+  return markers;
 }
 
 export function configSelectionHalo(map: Map) {
@@ -72,18 +78,15 @@ export function configSelectionHalo(map: Map) {
     },
   });
 
-  map.addLayer(
-    {
-      id: "selection-halo-layer",
-      type: "circle",
-      source: "selection-halo",
-      paint: {
-        "circle-radius": 120,
-        "circle-color": ["get", "color"],
-        "circle-blur": 1,
-        "circle-opacity": 0.35,
-      },
+  map.addLayer({
+    id: "selection-halo-layer",
+    type: "circle",
+    source: "selection-halo",
+    paint: {
+      "circle-radius": 130,
+      "circle-color": ["get", "color"],
+      "circle-blur": 0.8,
+      "circle-opacity": 0.55,
     },
-    "corrosion-points-layer",
-  );
+  });
 }

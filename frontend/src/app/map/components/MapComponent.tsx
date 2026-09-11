@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Map, NavigationControl } from "maplibre-gl";
+import { Map, NavigationControl, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { applySelectionHalo, configMapStyle } from "../utils/configMapStyle";
-import { configCorrosionPoints, configInitialMap, configSelectionHalo } from "../utils/configMap";
+import {
+  configCorrosionPoints,
+  configInitialMap,
+  configSelectionHalo,
+} from "../utils/configMap";
 
 import { CorrosionPoint } from "@/app/core/CorrosionPoint";
 
@@ -19,6 +23,7 @@ export default function MapComponent({
 }: MapComponentProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+  const markersRef = useRef<Marker[]>([]);
   const isMapLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -28,7 +33,10 @@ export default function MapComponent({
     mapRef.current?.on("load", () => {
       const map = mapRef.current!;
       configMapStyle(map);
-      configCorrosionPoints(map, onPointSelect ?? (() => {}));
+      markersRef.current = configCorrosionPoints(
+        map,
+        onPointSelect ?? (() => {}),
+      );
       configSelectionHalo(map);
       isMapLoadedRef.current = true;
     });
@@ -36,6 +44,8 @@ export default function MapComponent({
     mapRef.current.addControl(new NavigationControl(), "bottom-right");
 
     return () => {
+      markersRef.current.forEach((marker) => marker.remove());
+      markersRef.current = [];
       mapRef.current?.remove();
       mapRef.current = null;
       isMapLoadedRef.current = false;
@@ -43,19 +53,19 @@ export default function MapComponent({
   }, [onPointSelect]);
 
   useEffect(() => {
-  const map = mapRef.current;
-  if (!map || !isMapLoadedRef.current) return;
+    const map = mapRef.current;
+    if (!map || !isMapLoadedRef.current) return;
 
-  applySelectionHalo(map, selectedPoint ?? null);
+    applySelectionHalo(map, selectedPoint ?? null);
 
-  if (selectedPoint) {
-    map.flyTo({
-      center: [selectedPoint.position.lng, selectedPoint.position.lat],
-      zoom: 12,
-      duration: 1000,
-    });
-  }
-}, [selectedPoint]);
+    if (selectedPoint) {
+      map.flyTo({
+        center: [selectedPoint.position.lng, selectedPoint.position.lat],
+        zoom: 12,
+        duration: 1000,
+      });
+    }
+  }, [selectedPoint]);
 
   return (
     <div
